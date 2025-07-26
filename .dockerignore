@@ -1,0 +1,15 @@
+# Ignore Docker stuff
+Dockerfile
+docker-compose.yml
+
+# Ignore Git
+.git
+.gitignore
+
+# Logs and temp
+*.log
+*.tmp
+
+# OS/IDE files
+.DS_Store
+.vscode
