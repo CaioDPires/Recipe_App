@@ -14,7 +14,6 @@ RUN go mod download && go mod verify
 COPY main.go ./
 COPY handlers ./handlers
 COPY db ./db
-COPY migrations ./migrations
 
 # Copia o binário do goose (ferramenta de migração, compilada manualmente por motivos de leveza)
 COPY ./tools/goose /usr/local/bin/goose
