@@ -19,27 +19,13 @@ Tech Stack
 
     Containerization: Docker, Docker Compose
 
-Project Structure
-
-.
-├── api/              # Go source code for the API
-│   ├── handlers/     # HTTP handlers for CRUD endpoints
-│   ├── models/       # Data models and database access
-│   ├── server.go     # Entry point for the API server
-├── db/
-│   ├── migrations/   # SQL migrations for database schema
-├── docker-compose.yml
-├── Dockerfile
-├── go.mod
-├── go.sum
-└── README.md
 
 Getting Started
 Prerequisites
 
     Docker & Docker Compose
 
-    Go 1.24+ (for local development)
+    Go 1.24.5 (for local development)
 
 Running with Docker
 
