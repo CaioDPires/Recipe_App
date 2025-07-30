@@ -14,7 +14,7 @@ COPY api/db ./db
 COPY api/migrations ./migrations
 
 # Copy goose binary
-COPY api/tools/goose /usr/local/bin/goose
+COPY api/tnools/goose /usr/local/bin/goose
 RUN chmod +x /usr/local/bin/goose
 
 # Build binary
