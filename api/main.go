@@ -6,7 +6,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -21,7 +20,9 @@ func main() {
 	defer logger.Sync()
 
 	//Carrega a string de conexão da bd a partir das variáveis de ambiente
-	connStr := os.Getenv("DB_URL")
+	connStr := "postgres://recipe:mypassword@go_db:5432/recipe_db?sslmode=disable"
+	// connStr := os.Getenv("DB_URL")
+
 	if connStr == "" {
 		logger.Fatal("Erro ao carregar a variável DB_URL")
 	}
