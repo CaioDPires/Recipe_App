@@ -13,21 +13,19 @@ export default function Index() {
 
   const getRecipes = async () => {
     try {
-      const response = await fetch(BASE_URL + "recipes");
+      const response = await fetch(BASE_URL + "recipes",{ signal: AbortSignal.timeout(5000) }) ;
       if (!response.ok) {
-        // Read the error text and log it
         const errorText = await response.text();
         console.error(
           `Error fetching recipes: ${response.status} - ${errorText}`
         );
-        return; // stop further processing
+        return; 
       }
       const json = await response.json()
-      //const json = await response.json();
       const mapped = json.map((r: any) => ({
         id: r.id,
-        name: r.title, // only display the title
-        fullData: r, // keep the full object for later if needed
+        name: r.title, 
+        fullData: r,
       }));
       setData(mapped);
     } catch (error) {
