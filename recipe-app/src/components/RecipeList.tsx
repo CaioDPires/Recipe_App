@@ -1,4 +1,4 @@
-import { FlatList, View } from "react-native";
+import { FlatList } from "react-native";
 import { useTheme } from "../themes/ThemeContext";
 import { RecipeListItem, RecipeListItemData } from "./RecipeListItem";
 
@@ -8,23 +8,21 @@ type RecipeListProps = {
 };
 
 const RecipeList = ({ data, onItemPress }: RecipeListProps) => {
-    const {theme} = useTheme();
-    return (
-        <FlatList
-        data={data}
-        keyExtractor={(item)=> item.id}
-        renderItem={({item}) => (
-            <View style={{ width: '100%', alignItems: 'center' }}>
-            <RecipeListItem
+  const { theme } = useTheme();
+  return (
+    <FlatList
+      data={data}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+          <RecipeListItem
             item={item}
-            onPress={()=>onItemPress(item.id)}
-            backgroundColor={theme.background}
-            textColor={theme.text}
-            />
-            </View>
-
-        )}/>
-    );
+            onPress={() => onItemPress(item.id)}
+            backgroundColor={theme.stiletto['400']}
+            textColor={theme.stiletto['950']}
+          />
+      )}
+    />
+  );
 };
 
 export default RecipeList;

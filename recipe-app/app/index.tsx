@@ -1,30 +1,38 @@
 import RecipeList from "@/src/components/RecipeList";
 import { RecipeListItemData } from "@/src/components/RecipeListItem";
 import { useTheme } from "@/src/themes/ThemeContext";
+import { AntDesign } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+const BASE_URL = "http://192.168.15.189:8080/";
 
-const BASE_URL = "http://192.168.1.12:8080/";
 export default function Index() {
   const [isLoading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const { theme } = useTheme();
   const [data, setData] = useState<RecipeListItemData[] | null>(null);
+  const [filteredData, setFilteredData] = useState<RecipeListItemData[]>([]);
 
   const getRecipes = async () => {
     try {
-      const response = await fetch(BASE_URL + "recipes",{ signal: AbortSignal.timeout(5000) }) ;
+      const response = await fetch(BASE_URL + "recipes");
       if (!response.ok) {
         const errorText = await response.text();
         console.error(
           `Error fetching recipes: ${response.status} - ${errorText}`
         );
-        return; 
+        return;
       }
-      const json = await response.json()
+      const json = await response.json();
       const mapped = json.map((r: any) => ({
         id: r.id,
-        name: r.title, 
+        name: r.title,
         fullData: r,
       }));
       setData(mapped);
@@ -39,29 +47,57 @@ export default function Index() {
     getRecipes();
   }, []);
 
+  useEffect(() => {
+    if (data) {
+      setFilteredData(
+        data.filter((recipe) =>
+          recipe.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      );
+    }
+  }, [searchQuery, data]);
+
   return (
-    <View style={{ flex: 1 }}>
-      <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: theme.stiletto["50"] }}>
+      {/* Search Bar (should only wrap content height) */}
+      <View style={[styles.container ]}>
         <TextInput
           style={[
             styles.input,
-            { backgroundColor: theme.background, color: theme.primary },
+            {
+              backgroundColor: theme.stiletto["200"],
+              color: theme.stiletto["950"],
+            },
           ]}
           placeholder="Search Here"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
+        <TouchableOpacity
+          onPress={() => console.log("Plus pressed")}
+          style={{
+            backgroundColor: theme.stiletto["500"],
+            borderRadius: 30,
+            padding: 10,
+          }}
+        >
+          <AntDesign name="plus" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
-      <View style={[styles.container, {width: '100%'}]}>
+
+      {/* FlatList container (fills remaining space and full width) */}
+      <View style={{ flex: 1 }}>
         {isLoading ? (
-          <ActivityIndicator size="large" color={theme.primary} />
+          <ActivityIndicator size="large" color={theme.stiletto["950"]} />
         ) : (
-          <RecipeList
-            data={data}
-            onItemPress={() => {
-              return null;
-            }}
-          />
+          <View style={{ flex: 1 }}>
+            <RecipeList
+              data={filteredData}
+              onItemPress={() => {
+                return null;
+              }}
+            />
+          </View>
         )}
       </View>
     </View>
@@ -70,15 +106,18 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
+    alignSelf: "stretch",
+    flexDirection: "row"
   },
   input: {
+    fontFamily: "PoiretOne",
     borderWidth: 1,
     borderRadius: 10,
     height: 60,
-    width: "90%",
+    width: "75%",
     padding: 8,
-    margin: 20,
+    margin: 10,
   },
 });
