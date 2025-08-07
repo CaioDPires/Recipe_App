@@ -1,7 +1,10 @@
 import RecipeList from "@/src/components/RecipeList";
 import { RecipeListItemData } from "@/src/components/RecipeListItem";
+import { BASE_URL } from "@/src/constants";
 import { useTheme } from "@/src/themes/ThemeContext";
 import { AntDesign } from "@expo/vector-icons";
+import { useNavigationState } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-const BASE_URL = "http://192.168.15.189:8080/";
 
 export default function Index() {
   const [isLoading, setLoading] = useState(true);
@@ -18,6 +20,8 @@ export default function Index() {
   const { theme } = useTheme();
   const [data, setData] = useState<RecipeListItemData[] | null>(null);
   const [filteredData, setFilteredData] = useState<RecipeListItemData[]>([]);
+  const router = useRouter();
+  const route = useNavigationState((state) => state?.routes[state.index]);
 
   const getRecipes = async () => {
     try {
@@ -44,8 +48,10 @@ export default function Index() {
   };
 
   useEffect(() => {
-    getRecipes();
-  }, []);
+    if (route?.name === "index") {
+      getRecipes();
+    }
+  }, [route]);
 
   useEffect(() => {
     if (data) {
@@ -60,7 +66,7 @@ export default function Index() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.stiletto["50"] }}>
       {/* Search Bar (should only wrap content height) */}
-      <View style={[styles.container ]}>
+      <View style={[styles.container]}>
         <TextInput
           style={[
             styles.input,
@@ -93,8 +99,11 @@ export default function Index() {
           <View style={{ flex: 1 }}>
             <RecipeList
               data={filteredData}
-              onItemPress={() => {
-                return null;
+              onItemPress={(id) => {
+                router.push({
+                  pathname: '/recipe/[recipeIndex]',
+                  params: {recipeIndex: id}
+                });
               }}
             />
           </View>
@@ -109,7 +118,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "stretch",
-    flexDirection: "row"
+    flexDirection: "row",
   },
   input: {
     fontFamily: "PoiretOne",

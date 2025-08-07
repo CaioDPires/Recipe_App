@@ -40,12 +40,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 16,
     alignSelf: "center",
-    flexDirection: "row"
+    flexDirection: "row",
   },
   name: {
-    fontFamily: 'PoiretOne',
+    fontFamily: "PoiretOne",
     fontSize: 32,
     marginLeft: 10,
-    alignSelf: "flex-start"
+    alignSelf: "flex-start",
   },
 });
