@@ -14,22 +14,23 @@ import (
 func CreatePool(ctx context.Context, logger *zap.Logger, connStr string) (pool *pgxpool.Pool, err error) {
 	var maxAttempts uint8 = 5
 	var baseDelay time.Duration = 50 * time.Millisecond
+
 	for attempt := range maxAttempts {
-		pool, err = pgxpool.New(ctx, connStr) // Chama a funçao para tentar novamente
+		pool, err = pgxpool.New(ctx, connStr)
 		if err == nil {
 			if pingErr := pool.Ping(ctx); pingErr != nil {
 				err = pingErr
 			} else {
-				logger.Info("Conexão iniciada com sucesso!")
+				logger.Info("Database connection established successfully")
 				return pool, nil
 			}
 		}
 
-		//Senao, vamos esperar ou sair (caso contexto da funcao externa esteja terminado)
+		// If connection failed, wait and retry unless context is canceled
 		delay := baseDelay * (1 << attempt)
 		jitter := time.Duration(rand.Intn(1000)) * time.Millisecond // up to 1s random jitter
 		wait := delay + jitter
-		fmt.Printf("Tentativa %d falhou: %v. Tentando novamente em %v...\n", attempt+1, err, wait)
+		fmt.Printf("Attempt %d failed: %v. Retrying in %v...\n", attempt+1, err, wait)
 
 		select {
 		case <-ctx.Done():
@@ -38,32 +39,28 @@ func CreatePool(ctx context.Context, logger *zap.Logger, connStr string) (pool *
 			continue
 		}
 	}
-	return nil, fmt.Errorf("all %d attempts failed: %w", maxAttempts, err)
+
+	return nil, fmt.Errorf("all %d attempts to connect failed: %w", maxAttempts, err)
 }
 
-func GetRecipes(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) (recipes []Recipe, err error) {
-
-	//Executar a query
-	query := `SELECT * FROM recipes`
+func GetRecipes(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) (recipes []RecipeIDandTitle, err error) {
+	query := `SELECT id, title FROM recipes`
 	rows, err := pool.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("query: %w", err)
+		return nil, fmt.Errorf("query execution failed: %w", err)
 	}
-	logger.Info("Query executada com sucesso!")
+	logger.Info("Recipe list query executed successfully")
 	defer rows.Close()
 
-	//Transforma o resultado da query em struct e retorna para o handler
-	rowsData, err := pgx.CollectRows(rows, pgx.RowToStructByName[Recipe])
+	recipes, err = pgx.CollectRows(rows, pgx.RowToStructByName[RecipeIDandTitle])
 	if err != nil {
-		return nil, fmt.Errorf("collect rows: %w", err)
+		return nil, fmt.Errorf("failed to collect query results: %w", err)
 	}
-	logger.Info("Resultado da query reestruturado!")
-	return rowsData, nil
-
+	logger.Info("Recipe list retrieved successfully")
+	return recipes, nil
 }
 
 func InsertRecipe(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool, recipe Recipe) (err error) {
-	//Roda o comando
 	query := `INSERT INTO 
 	recipes(title, description, steps, prep_time, servings, image_url, ingredients)
 	VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -75,6 +72,7 @@ func InsertRecipe(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool, r
 		servings = EXCLUDED.servings,
 		image_url = EXCLUDED.image_url,
 		ingredients = EXCLUDED.ingredients;`
+
 	commandTag, err := pool.Exec(context.Background(), query,
 		recipe.Title,
 		recipe.Description,
@@ -84,23 +82,39 @@ func InsertRecipe(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool, r
 		recipe.ImageURL,
 		recipe.Ingredients)
 	if err != nil {
-		return fmt.Errorf("erro na inserção: %w", err)
+		return fmt.Errorf("failed to insert recipe: %w", err)
 	}
 	if commandTag.RowsAffected() != 1 {
-		return fmt.Errorf("erro na inserção: nenhuma linha afetada")
+		return fmt.Errorf("failed to insert recipe: no rows affected")
 	}
-	return
+	return nil
 }
 
 func DeleteRecipe(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool, id string) (err error) {
-	//Roda a query
 	query := `DELETE FROM recipes WHERE id = $1`
 	commandTag, err := pool.Exec(ctx, query, id)
 	if err != nil {
-		return fmt.Errorf("erro na remoção: %w", err)
+		return fmt.Errorf("failed to delete recipe: %w", err)
 	}
 	if commandTag.RowsAffected() != 1 {
-		return fmt.Errorf("erro na remoção: nenhuma linha afetada")
+		return fmt.Errorf("failed to delete recipe: no rows affected")
 	}
 	return nil
+}
+
+func GetRecipeByID(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool, id string) (recipe Recipe, err error) {
+	query := `SELECT * FROM recipes WHERE id = $1`
+	rows, err := pool.Query(ctx, query, id)
+	if err != nil {
+		return Recipe{}, fmt.Errorf("query execution failed: %w", err)
+	}
+	logger.Info("Recipe lookup query executed successfully")
+	defer rows.Close()
+
+	recipe, err = pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Recipe])
+	if err != nil {
+		return Recipe{}, pgx.ErrNoRows
+	}
+	logger.Info("Recipe retrieved successfully")
+	return recipe, nil
 }

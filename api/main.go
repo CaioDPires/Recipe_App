@@ -40,9 +40,10 @@ func main() {
 	//Cria o roteador e designa as rotas
 	router := mux.NewRouter()
 	router.HandleFunc("/recipes", server.GetRecipes).Methods("GET")
+	router.HandleFunc("/recipes{id}", server.UpdateRecipe).Methods("PUT")
 	router.HandleFunc("/recipes", server.InsertRecipe).Methods("POST")
 	router.HandleFunc("/recipes/{id}", server.DeleteRecipe).Methods("DELETE")
-	router.HandleFunc("/recipes", server.UpdateRecipe).Methods("UPDATE")
+	router.HandleFunc("/recipe/{id}", server.GetRecipeByID).Methods("GET")
 
 	// Inicia o servidor HTTP
 	logger.Info("Escutando em :8080")
