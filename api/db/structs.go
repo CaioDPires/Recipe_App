@@ -13,3 +13,8 @@ type Recipe struct {
 	CreatedAt   time.Time `db:"created_at" json:"created_at"`
 	Ingredients []string  `db:"ingredients" json:"ingredients"`
 }
+
+type RecipeIDandTitle struct {
+	ID    string `db:"id" json:"id"`
+	Title string `db:"title" json:"title"`
+}

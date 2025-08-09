@@ -7,109 +7,150 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
 
-// Struct (quase classe) que passa a pool e o logger para as rotas
+// Struct that holds the database pool and logger for route handlers
 type Server struct {
 	DB     *pgxpool.Pool
 	Logger *zap.Logger
 }
 
-// Funcao chamada na rota /recipes (retorna todas as receitas)
+// Handler for GET /recipes (returns all recipes)
 func (s *Server) GetRecipes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	recipes, err := db.GetRecipes(ctx, s.Logger, s.DB)
 	if err != nil {
-		s.Logger.Error("Falha na obtenção das receitas", zap.Error(err))
-		http.Error(w, "Falha na obtenção das receitas: "+err.Error(), http.StatusInternalServerError)
+		s.Logger.Error("Failed to retrieve recipes from the database", zap.Error(err))
+		http.Error(w, "Failed to retrieve recipes: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	//Configura a resposta HTTP
+
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(recipes)
 	if err != nil {
-		s.Logger.Error("Falha na serialização da resposta", zap.Error(err))
-		http.Error(w, "Falha na serialização da resposta: "+err.Error(), http.StatusInternalServerError)
+		s.Logger.Error("Failed to encode recipes as JSON", zap.Error(err))
+		http.Error(w, "Failed to serialize recipes to JSON: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	s.Logger.Info("Resultado retornado!")
 
+	s.Logger.Info("Recipes retrieved and returned successfully")
 }
 
 func (s *Server) InsertRecipe(w http.ResponseWriter, r *http.Request) {
-	//Armazena o corpo do request em um struct Recipe
+	// Parse request body into a Recipe struct
 	var recipe db.Recipe
 	err := json.NewDecoder(r.Body).Decode(&recipe)
 	if err != nil {
-		s.Logger.Error("Input inválido!", zap.Error(err))
-		http.Error(w, "Input inválido: "+err.Error(), http.StatusBadRequest)
+		s.Logger.Error("Invalid request body (malformed JSON)", zap.Error(err))
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	//Tenta inserir na base
+	// Insert into the database
 	ctx := r.Context()
 	err = db.InsertRecipe(ctx, s.Logger, s.DB, recipe)
 	if err != nil {
-		s.Logger.Error("Erro ao inserir receita", zap.Error(err))
-		http.Error(w, "Falha no cadastro da receita: "+err.Error(), http.StatusInternalServerError)
+		s.Logger.Error("Failed to insert recipe into the database", zap.Error(err))
+		http.Error(w, "Failed to insert recipe: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode("Receita inserida com sucesso ")
+
 	w.WriteHeader(http.StatusOK)
-	s.Logger.Info("Receita inserida com sucesso!")
+	json.NewEncoder(w).Encode("Recipe inserted successfully")
+	s.Logger.Info("Recipe inserted successfully")
 }
 
 func (s *Server) DeleteRecipe(w http.ResponseWriter, r *http.Request) {
-	// Ler o parâmetro ID
+	// Read the "id" parameter
 	vars := mux.Vars(r)
-	var id string
 	id, ok := vars["id"]
 	if !ok {
-		http.Error(w, "Parâmetro ID não encontrado", http.StatusBadRequest)
+		http.Error(w, "Missing 'id' parameter", http.StatusBadRequest)
 		return
 	}
 
-	// Validar o formato da string
+	// Validate UUID format
 	_, err := uuid.Parse(id)
 	if err != nil {
 		http.Error(w, "Invalid UUID format", http.StatusBadRequest)
 		return
 	}
 
-	//Rodar o comando
+	// Delete from the database
 	ctx := r.Context()
 	err = db.DeleteRecipe(ctx, s.Logger, s.DB, id)
 	if err != nil {
-		s.Logger.Error("Erro ao apagar receita", zap.Error(err))
-		http.Error(w, "Erro na remoção:"+err.Error(), http.StatusInternalServerError)
+		s.Logger.Error("Failed to delete recipe", zap.Error(err))
+		http.Error(w, "Failed to delete recipe: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	//Se tudo ok, retorna OK
+
 	w.WriteHeader(http.StatusOK)
-	s.Logger.Info("Receita apagada com sucesso!")
+	s.Logger.Info("Recipe deleted successfully")
 }
 
 func (s *Server) UpdateRecipe(w http.ResponseWriter, r *http.Request) {
-	//Armazena o corpo do request em um struct Recipe
+	// Parse request body into a Recipe struct
 	var recipe db.Recipe
 	err := json.NewDecoder(r.Body).Decode(&recipe)
 	if err != nil {
-		s.Logger.Error("Input inválido!", zap.Error(err))
-		http.Error(w, "Input inválido: "+err.Error(), http.StatusBadRequest)
+		s.Logger.Error("Invalid request body (malformed JSON)", zap.Error(err))
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	//Rodar o comando
+	// Update in the database
 	ctx := r.Context()
-	err = db.InsertRecipe(ctx, s.Logger, s.DB, recipe)
+	err = db.InsertRecipe(ctx, s.Logger, s.DB, recipe) // This might need to be db.UpdateRecipe
 	if err != nil {
-		s.Logger.Error("Erro na atualização", zap.Error(err))
-		http.Error(w, "Erro na atualização", http.StatusInternalServerError)
+		s.Logger.Error("Failed to update recipe", zap.Error(err))
+		http.Error(w, "Failed to update recipe: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	s.Logger.Info("Receita atualizada com sucesso!")
+	s.Logger.Info("Recipe updated successfully")
+}
 
+func (s *Server) GetRecipeByID(w http.ResponseWriter, r *http.Request) {
+	// Read the "id" parameter
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, "Missing 'id' parameter", http.StatusBadRequest)
+		return
+	}
+
+	// Validate UUID format
+	_, err := uuid.Parse(id)
+	if err != nil {
+		http.Error(w, "Invalid UUID format", http.StatusBadRequest)
+		return
+	}
+
+	// Retrieve from the database
+	ctx := r.Context()
+	recipe, err := db.GetRecipeByID(ctx, s.Logger, s.DB, id)
+	if err == pgx.ErrNoRows {
+		s.Logger.Info("No recipe found with the given ID", zap.Error(err))
+		http.Error(w, "Recipe not found", http.StatusBadRequest)
+		return
+	} else if err != nil {
+		s.Logger.Error("Failed to retrieve recipe by ID", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(recipe)
+	if err != nil {
+		s.Logger.Error("Failed to encode recipe as JSON", zap.Error(err))
+		http.Error(w, "Failed to serialize recipe to JSON: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	s.Logger.Info("Recipe retrieved successfully")
 }
