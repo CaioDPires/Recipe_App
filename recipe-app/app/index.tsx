@@ -5,7 +5,7 @@ import { useTheme } from "@/src/themes/ThemeContext";
 import { AntDesign } from "@expo/vector-icons";
 import { useNavigationState } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -15,9 +15,31 @@ import {
 } from "react-native";
 
 export default function Index() {
+  const { theme } = useTheme();
+  const styles = StyleSheet.create({
+    container: {
+      justifyContent: "center",
+      alignItems: "center",
+      alignSelf: "stretch",
+      flexDirection: "row",
+    },
+    input: {
+      fontFamily: "PoiretOne",
+      borderWidth: 1,
+      borderRadius: 10,
+      borderColor: theme.tertiary,
+      height: 60,
+      width: "75%",
+      padding: 8,
+      margin: 10,
+      backgroundColor: theme.surface,
+      color: theme.onSurface,
+    },
+  });
+
   const [isLoading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const { theme } = useTheme();
+
   const [data, setData] = useState<RecipeListItemData[] | null>(null);
   const [filteredData, setFilteredData] = useState<RecipeListItemData[]>([]);
   const router = useRouter();
@@ -64,17 +86,11 @@ export default function Index() {
   }, [searchQuery, data]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.stiletto["50"] }}>
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
       {/* Search Bar (should only wrap content height) */}
       <View style={[styles.container]}>
         <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.stiletto["200"],
-              color: theme.stiletto["950"],
-            },
-          ]}
+          style={styles.input}
           placeholder="Search Here"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -82,7 +98,7 @@ export default function Index() {
         <TouchableOpacity
           onPress={() => console.log("Plus pressed")}
           style={{
-            backgroundColor: theme.stiletto["500"],
+            backgroundColor: theme.primary,
             borderRadius: 30,
             padding: 10,
           }}
@@ -94,15 +110,15 @@ export default function Index() {
       {/* FlatList container (fills remaining space and full width) */}
       <View style={{ flex: 1 }}>
         {isLoading ? (
-          <ActivityIndicator size="large" color={theme.stiletto["950"]} />
+          <ActivityIndicator size="large" color={theme.onBackground} />
         ) : (
           <View style={{ flex: 1 }}>
             <RecipeList
               data={filteredData}
               onItemPress={(id) => {
                 router.push({
-                  pathname: '/recipe/[recipeIndex]',
-                  params: {recipeIndex: id}
+                  pathname: "/recipe/[recipeId]",
+                  params: { recipeId: id },
                 });
               }}
             />
@@ -112,21 +128,3 @@ export default function Index() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    flexDirection: "row",
-  },
-  input: {
-    fontFamily: "PoiretOne",
-    borderWidth: 1,
-    borderRadius: 10,
-    height: 60,
-    width: "75%",
-    padding: 8,
-    margin: 10,
-  },
-});

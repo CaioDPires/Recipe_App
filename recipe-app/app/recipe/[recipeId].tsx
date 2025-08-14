@@ -1,10 +1,12 @@
-import RecipeInfo from "@/src/components/RecipeInfo";
+import RecipeDetailsMeta from "@/src/components/RecipeDetailsMeta";
 import { BASE_URL } from "@/src/constants";
+import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Text, View, StyleSheet, useWindowDimensions } from "react-native";
 
 export interface Recipe {
   id: string;
+  title: string;
   description?: string | null;
   steps: string;
   prep_time: number;
@@ -14,17 +16,14 @@ export interface Recipe {
   ingredients: string[];
 }
 
-type RecipeIndexProps = {
-  id: string;
-};
-
-function RecipeIndex({ id }: RecipeIndexProps) {
+function RecipeIndex() {
   const [isLoading, setLoading] = useState<boolean>(true);
   const [recipeData, setRecipeData] = useState<Recipe>();
-
+  const { recipeId } = useLocalSearchParams();
   const getRecipe = async () => {
     try {
-      const response = await fetch(`${BASE_URL}recipe/${id}`);
+      console.log(recipeId);
+      const response = await fetch(`${BASE_URL}recipe/${recipeId}`);
       if (!response.ok) {
         const errorText = await response.text();
         console.error(
@@ -54,11 +53,13 @@ function RecipeIndex({ id }: RecipeIndexProps) {
   }
 
   return (
-    <View>
-      {/* Other details like image, title, etc. */}
+    <>
+      <View style={styles.titleWrapper}>
+        <Text style={styles.title}>{recipeData.title}</Text>
+      </View>
 
       {/* Pass only the props RecipeInfo needs */}
-      <RecipeInfo
+      <RecipeDetailsMeta
         recipeInfo={{
           prep_time: recipeData.prep_time,
           servings: recipeData.servings,
@@ -66,10 +67,21 @@ function RecipeIndex({ id }: RecipeIndexProps) {
           description: recipeData.description,
         }}
       />
-
-      {/* You could also pass the whole recipeData if RecipeInfo supports it */}
-    </View>
+      
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  titleWrapper: {
+    margin: 15,
+    justifyContent: "center",
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: "bold",
+  },
+  
+});
 
 export default RecipeIndex;

@@ -17,8 +17,8 @@ const RecipeList = ({ data, onItemPress }: RecipeListProps) => {
           <RecipeListItem
             item={item}
             onPress={() => onItemPress(item.id)}
-            backgroundColor={theme.stiletto['400']}
-            textColor={theme.stiletto['950']}
+            backgroundColor={theme.secondary}
+            textColor={theme.onSecondary}
           />
       )}
     />
