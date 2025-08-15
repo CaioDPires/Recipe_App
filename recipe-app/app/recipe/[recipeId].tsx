@@ -8,7 +8,7 @@ export interface Recipe {
   id: string;
   title: string;
   description?: string | null;
-  steps: string;
+  steps: string[];
   prep_time: number;
   servings: number;
   image_url?: string | null;
@@ -22,7 +22,6 @@ function RecipeIndex() {
   const { recipeId } = useLocalSearchParams();
   const getRecipe = async () => {
     try {
-      console.log(recipeId);
       const response = await fetch(`${BASE_URL}recipe/${recipeId}`);
       if (!response.ok) {
         const errorText = await response.text();
