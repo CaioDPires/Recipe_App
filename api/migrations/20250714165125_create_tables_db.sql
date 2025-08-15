@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS recipes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   description TEXT,
-  steps TEXT NOT NULL,
+  steps TEXT[] NOT NULL,
   prep_time INTEGER NOT NULL,
   servings INTEGER NOT NULL,
   image_url TEXT,
@@ -19,14 +19,16 @@ CREATE TABLE IF NOT EXISTS recipes (
 
 
 -- Insert Pancakes
--- Insert Pancakes
 INSERT INTO recipes (
   id, title, description, steps, prep_time, servings, image_url, ingredients
 ) VALUES (
   '00000000-0000-0000-0000-000000000001',
   'Pancakes',
   'Fluffy pancakes.',
-  'Mix ingredients. Cook on skillet.',
+  ARRAY[
+    'Mix ingredients.',
+    'Cook on skillet.'
+  ],
   15,
   4,
   'http://example.com/pancakes.jpg',
@@ -45,7 +47,11 @@ INSERT INTO recipes (
   '00000000-0000-0000-0000-000000000002',
   'Spaghetti',
   'Simple tomato spaghetti.',
-  'Boil pasta. Heat sauce. Combine.',
+  ARRAY[
+    'Boil pasta.',
+    'Heat sauce.',
+    'Combine.'
+  ],
   20,
   2,
   'http://example.com/spaghetti.jpg',
@@ -62,7 +68,10 @@ INSERT INTO recipes (
   '00000000-0000-0000-0000-000000000003',
   'Salad',
   'Fresh mixed salad.',
-  'Chop vegetables. Mix and serve.',
+  ARRAY[
+    'Chop vegetables.',
+    'Mix and serve.'
+  ],
   10,
   1,
   NULL,
@@ -71,6 +80,7 @@ INSERT INTO recipes (
     '1 Tomato'
   ]
 );
+
 
 
 

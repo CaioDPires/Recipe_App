@@ -6,7 +6,7 @@ type Recipe struct {
 	ID          string    `db:"id" json:"id"`
 	Title       string    `db:"title" json:"title"`
 	Description *string   `db:"description" json:"description,omitempty"`
-	Steps       string    `db:"steps" json:"steps"`
+	Steps       []string  `db:"steps" json:"steps"`
 	PrepTime    int       `db:"prep_time" json:"prep_time"`
 	Servings    int       `db:"servings" json:"servings"`
 	ImageURL    *string   `db:"image_url" json:"image_url,omitempty"`
